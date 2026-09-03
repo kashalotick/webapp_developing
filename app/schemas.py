@@ -10,12 +10,19 @@ class DriverCreate(BaseModel):
     number: int
 
 
+class DriverUpdate(BaseModel):
+    name: str | None = None
+    country: str | None = None
+    team: str | None = None
+    number: int | None = None
+
 class Driver(DriverCreate):
-    id: int
-    rating: int
+    id: int = 0
+    rating: int = 0
 
 
 class DriverInRace(BaseModel):
+    id: int = 0
     driver_id: int
     race_id: int
 
@@ -27,12 +34,19 @@ class RaceCreate(BaseModel):
     time: timedelta
     track: str
 
+class RaceUpdate(BaseModel):
+    championship: str | None = None
+    name: str | None = None
+    start_date: datetime | None = None
+    time: timedelta | None = None
+    track: str | None = None
+
 
 class Race(RaceCreate):
-    id: int
+    id: int = 0
 
 
 class RatingDelta(BaseModel):
     delta: int
-class RegisteredDriver(BaseModel):
+class DriverRegistration(BaseModel):
     driver_id: int

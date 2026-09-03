@@ -38,6 +38,10 @@ class InMemoryRepository(Generic[T]):
     def delete(self, entity_id: int) -> None:
         self.storage.pop(entity_id, None)
 
+    def clear(self) -> None:
+        self.storage.clear()
+        self.next_id = 0
+
 
 class DriverRepository(InMemoryRepository[Driver]):
     pass
