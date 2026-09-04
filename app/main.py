@@ -9,10 +9,8 @@ from app.schemas import Driver, Race, DriverInRace
 from app.services.repository import DriverRepository, RaceRepository, DriverInRaceRepository
 from app.services.repository_serializer import RepositorySerializer
 
-
-
-
 REPOSITORY_PATH = Path.cwd() / "data"
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -34,6 +32,8 @@ async def lifespan(app: FastAPI):
     }
 
     serializer.serialize()
+
+
 app = FastAPI(lifespan=lifespan)
 
 app.include_router(driver_router)
