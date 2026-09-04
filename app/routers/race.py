@@ -132,4 +132,6 @@ async def unregister_driver(
     if len(target) == 0:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Driver not registered for this race")
 
+    driver_in_race_repo.delete(target[0].id)
+
     return None
