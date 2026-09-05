@@ -1,7 +1,9 @@
-﻿from typing import Annotated
+﻿from typing import Annotated, AsyncGenerator
 
 from fastapi import Depends, Request
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.db import async_session_maker, get_db
 from app.services.repository import DriverRepository, RaceRepository, DriverInRaceRepository
 
 
@@ -18,3 +20,6 @@ def get_driver_in_race_repo(request: Request) -> DriverInRaceRepository:
 DriverRepoDep = Annotated[DriverRepository, Depends(get_driver_repo)]
 RaceRepoDep = Annotated[RaceRepository, Depends(get_race_repo)]
 DriverInRaceRepoDep = Annotated[DriverInRaceRepository, Depends(get_driver_in_race_repo)]
+
+
+SessionDep = Annotated[AsyncSession, Depends(get_db)]
