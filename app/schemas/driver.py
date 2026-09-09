@@ -42,6 +42,8 @@ class DriverRead(DriverCreate):
 
 
 class DriverInRace(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     driver_id: int
     race_id: int
 
