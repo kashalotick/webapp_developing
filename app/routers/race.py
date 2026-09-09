@@ -50,7 +50,7 @@ async def patch_by_id(race_id: int, body: RaceUpdate, race_repo: RaceRepoDep) ->
 })
 async def delete_by_id(race_id: int, race_repo: RaceRepoDep) -> None:
     result = await race_repo.delete(race_id)
-    if result is None:
+    if not result:
         raise BusinessException.not_found(RaceRead)
     return None
 
@@ -86,4 +86,5 @@ async def unregister_driver(
         driver_id: int,
         race_repo: RaceRepoDep
 ) -> None:
-    return await race_repo.unregister_driver(race_id, driver_id)
+    await race_repo.unregister_driver(race_id, driver_id)
+    return None

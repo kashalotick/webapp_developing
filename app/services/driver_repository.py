@@ -28,7 +28,7 @@ class DriverRepository(AbstractDriverRepository, AsyncRepository):
         super().__init__(db, DriverModel, DriverRead)
         self.db = db
 
-    async def change_rating(self, driver_id: int, delta: int) -> None:
+    async def change_rating(self, driver_id: int, delta: int) -> None | DriverRead:
         query = (
             update(DriverModel)
             .where(DriverModel.id == driver_id)
@@ -42,7 +42,7 @@ class DriverRepository(AbstractDriverRepository, AsyncRepository):
 
         if not result:
             return None
-        return self.read_schema.model_validate(result)
+        return DriverRead.model_validate(result)
 
 
     async def get_driver_races(self, driver_id: int) -> list[RaceRead]:

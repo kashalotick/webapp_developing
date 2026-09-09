@@ -1,19 +1,17 @@
 ﻿services:
   db:
-    image: postgres:latest
-    container_name: lab-db
+    image: postgres:16-alpine
+    container_name: webapp-lab-db
+    restart: unless-stopped
     env_file:
-      - backend/.env
+      - .env
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
-    networks:
-      - lab-network
     volumes:
       - db-data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
-
+      - "${DB_PORT:-5432}:5432"
 volumes:
   db-data:

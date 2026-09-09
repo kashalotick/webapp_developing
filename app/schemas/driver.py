@@ -1,8 +1,7 @@
-from datetime import time, timedelta, datetime
 from typing import Annotated
 
 import pycountry
-from pydantic import BaseModel, ConfigDict, field_validator, Field, BeforeValidator
+from pydantic import BaseModel, ConfigDict, Field, BeforeValidator
 
 
 def validate_country_code(value: str) -> str:
@@ -13,7 +12,13 @@ def validate_country_code(value: str) -> str:
 
     return code
 
+def validate_country_code_or_none(value: str | None) -> str | None:
+    if value is None:
+        return None
+    return validate_country_code(value)
+
 CountryCodeValidator = Annotated[str, BeforeValidator(validate_country_code)]
+CountryCodeOrNoneValidator = Annotated[str | None, BeforeValidator(validate_country_code_or_none)]
 
 class DriverCreate(BaseModel):
     name: str = Field(min_length=1, max_length=255)
@@ -24,7 +29,7 @@ class DriverCreate(BaseModel):
 
 class DriverUpdate(BaseModel):
     name: str | None = Field(min_length=1, max_length=255, default=None)
-    country: CountryCodeValidator | None = None
+    country: CountryCodeOrNoneValidator = None
     team: str | None = Field(min_length=1, max_length=255, default=None)
     number: int | None = Field(ge=1, le=99, default=None)
 
@@ -32,12 +37,11 @@ class DriverUpdate(BaseModel):
 class DriverRead(DriverCreate):
     model_config = ConfigDict(from_attributes=True)
 
-    id: int = 0
-    rating: int = 0
+    id: int
+    rating: int
 
 
 class DriverInRace(BaseModel):
-    id: int = 0
     driver_id: int
     race_id: int
 

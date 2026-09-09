@@ -26,9 +26,7 @@ class BusinessException(Exception):
     def __init__(self, error_code: ErrorCode, message: str | None = None):
         self.error_code = error_code
         self.message = error_code.value if message is None else message
-        super().__init__(
-            message
-        )
+        super().__init__(self.message)
 
     @classmethod
     def from_code(cls, error_code: ErrorCode):
@@ -36,5 +34,5 @@ class BusinessException(Exception):
 
     @classmethod
     def not_found(cls, entity: Type):
-        message = f"{ErrorCode.NOT_FOUND}: {entity.__name__}"
+        message = f"{ErrorCode.NOT_FOUND.value}: {entity.__name__}"
         return cls(ErrorCode.NOT_FOUND, message)

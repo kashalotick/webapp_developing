@@ -11,8 +11,7 @@ driver_router = APIRouter(prefix="/drivers", tags=["Drivers"])
 
 @driver_router.post("", status_code=status.HTTP_201_CREATED, response_model=DriverRead)
 async def create(body: DriverCreate, driver_repo: DriverRepoDep) -> DriverRead:
-    driver = DriverRead(**body.model_dump())
-    return await driver_repo.add(driver)
+    return await driver_repo.add(body)
 
 
 @driver_router.get("", response_model=list[DriverRead])
@@ -50,7 +49,7 @@ async def patch_by_id(driver_id: int, body: DriverUpdate, driver_repo: DriverRep
 })
 async def delete_by_id(driver_id: int, driver_repo: DriverRepoDep):
     result = await driver_repo.delete(driver_id)
-    if result is None:
+    if not result:
         raise BusinessException.not_found(DriverRead)
     return None
 

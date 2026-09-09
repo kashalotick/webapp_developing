@@ -20,5 +20,5 @@ class DriverInRaceModel(Base):
         ForeignKey("races.id", ondelete="CASCADE"), primary_key=True
     )
 
-    driver: Mapped["DriverModel"] = relationship(back_populates="race_participations")
-    race: Mapped["RaceModel"] = relationship(back_populates="driver_participations")
+    driver: Mapped["DriverModel"] = relationship(back_populates="race_registrations")
+    race: Mapped["RaceModel"] = relationship(back_populates="driver_registrations")

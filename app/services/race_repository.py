@@ -21,7 +21,6 @@ class AbstractRaceRepository(AbstractAsyncRepository[RaceModel, RaceCreate, Race
     async def unregister_driver(self, race_id: int, driver_id: int) -> None:
         pass
 
-
     @abstractmethod
     async def get_drivers_in_race(self, race_id: int) -> list[DriverRead]:
         pass
@@ -31,14 +30,6 @@ class RaceRepository(AbstractRaceRepository, AsyncRepository):
     def __init__(self, db: AsyncSession) -> None:
         super().__init__(db, RaceModel, RaceRead)
         self.db = db
-
-    async def delete(self, entity_id: int) -> bool:
-        await super().delete(entity_id)
-        query = delete(DriverInRaceModel).where(DriverInRaceModel.race_id == entity_id).returning(DriverInRaceModel.race_id)
-        result = await self.db.execute(query)
-        await self.db.flush()
-        return len(result.all()) > 0
-
 
     async def _get_registration_or_none(self, race_id: int, driver_id: int) -> DriverInRaceModel | None:
         race = await self.db.get(RaceModel, race_id)
@@ -60,19 +51,18 @@ class RaceRepository(AbstractRaceRepository, AsyncRepository):
         if registration is not None:
             raise BusinessException.from_code(ErrorCode.DRIVER_ALREADY_REGISTERED)
 
-        driver_in_race = DriverInRace(race_id=race_id, driver_id=driver_id)
+        driver_in_race = DriverInRaceModel(race_id=race_id, driver_id=driver_id)
         self.db.add(driver_in_race)
         await self.db.flush()
-        return driver_in_race
+        return DriverInRace.model_validate(driver_in_race)
 
     async def unregister_driver(self, race_id: int, driver_id: int) -> None:
         registration = await self._get_registration_or_none(race_id, driver_id)
         if registration is None:
             raise BusinessException.from_code(ErrorCode.DRIVER_IS_NOT_REGISTERED)
 
-        driver_in_race = DriverInRace(race_id=race_id, driver_id=driver_id)
-        await self.db.delete(driver_in_race)
-
+        await self.db.delete(registration)
+        await self.db.flush()
 
     async def get_drivers_in_race(self, race_id: int) -> list[DriverRead]:
         stmt = (
@@ -84,6 +74,3 @@ class RaceRepository(AbstractRaceRepository, AsyncRepository):
         drivers = result.scalars().unique().all()
 
         return [DriverRead.model_validate(driver) for driver in drivers]
-
-
-

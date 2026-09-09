@@ -13,8 +13,10 @@ __pycache__/
 
 *.sqlite3
 *.db
+*.sql
 
 .vscode/
 .idea/
 
 data/
+

@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     DB_NAME: str
     DB_USER: str
     DB_PASSWORD: str
-    DB_PORT: int = 5432
+    DB_PORT: int
 
     model_config = SettingsConfigDict(
         env_file=".env",

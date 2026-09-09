@@ -6,9 +6,25 @@ Entities: Drivers, Races
 
 ## Run
 
+
+```shell
+docker-compose up
+```
 ```shell
 uvicorn app.main:app --reload
 ```
+
+## DB
+
+```shell
+docker exec -t webapp-lab-db pg_dump -U admin -d postgres -f /tmp/dump.sql
+docker cp webapp-lab-db:/tmp/dump.sql ./dump.sql
+```
+```shell
+docker cp ./dump.sql webapp-lab-db:/tmp/dump.sql
+docker exec -it webapp-lab-db psql -U admin -d postgres -f /tmp/dump.sql
+ ```
+
 
 ## Test data
 

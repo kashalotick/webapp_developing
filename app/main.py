@@ -1,5 +1,4 @@
 ﻿from contextlib import asynccontextmanager
-from pathlib import Path
 
 from fastapi import FastAPI
 from starlette.requests import Request
@@ -10,8 +9,6 @@ from app.models import * #noqa
 from app.exceptions import BusinessException, error_status_code_map, ErrorSchema
 from app.routers.driver import driver_router
 from app.routers.race import race_router
-
-REPOSITORY_PATH = Path.cwd() / "data"
 
 
 @asynccontextmanager
@@ -36,5 +33,5 @@ async def business_exception_handler(
 ) -> JSONResponse:
     return JSONResponse(
         status_code=error_status_code_map[exc.error_code],
-        content=ErrorSchema(code=exc.error_code.name, message=exc.message)
+        content=ErrorSchema(code=exc.error_code.name, message=exc.message).model_dump(),
     )
