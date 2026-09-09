@@ -1,6 +1,6 @@
 ﻿from abc import ABC, abstractmethod
 
-from sqlalchemy import update, select
+from sqlalchemy import update, select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.driver_in_race_model import DriverInRaceModel
@@ -33,7 +33,7 @@ class DriverRepository(AbstractDriverRepository, AsyncRepository):
             update(DriverModel)
             .where(DriverModel.id == driver_id)
             .values({
-                DriverModel.rating: DriverModel.rating + delta
+                DriverModel.rating: func.greatest(0, DriverModel.rating + delta)
             })
             .returning(DriverModel)
         )
