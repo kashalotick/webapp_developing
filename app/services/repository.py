@@ -1,55 +1,101 @@
-﻿from typing import Generic, TypeVar
+﻿from abc import ABC, abstractmethod
+from typing import Generic, TypeVar, Type
 
 from pydantic import BaseModel
+from sqlalchemy import select, update, delete
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.schemas import Driver, Race, DriverInRace
+ModelType = TypeVar("ModelType")
+CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
+UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
+ReadSchemaType = TypeVar("ReadSchemaType", bound=BaseModel)
+class AbstractAsyncRepository(ABC, Generic[ModelType, CreateSchemaType, UpdateSchemaType, ReadSchemaType]):
 
-T = TypeVar("T", bound=BaseModel)
+    @abstractmethod
+    async def add(self, schema: CreateSchemaType) -> ReadSchemaType:
+        pass
+    @abstractmethod
+    async def get(self, entity_id: int) -> ReadSchemaType | None:
+        pass
+    @abstractmethod
+    async def get_all(self) -> list[ReadSchemaType]:
+        pass
 
+    @abstractmethod
+    async def patch(self, entity_id: int, schema: UpdateSchemaType) -> ReadSchemaType | None:
+        pass
 
-class InMemoryRepository(Generic[T]):
-    def __init__(self) -> None:
-        self.storage: dict[int, T] = {}
-        self.next_id: int = 0
-
-    def get_next_id(self) -> int:
-        self.next_id += 1
-        return self.next_id
-
-    def add(self, entity: T) -> T:
-        entity_id = self.get_next_id()
-        entity.id = entity_id
-        self.storage[entity_id] = entity
-        return entity
-
-    def get(self, entity_id: int) -> T | None:
-        return self.storage.get(entity_id)
-
-    def get_all(self) -> list[T]:
-        return list(self.storage.values())
-
-    def set(self, entity_id: int, entity: T) -> T:
-        entity.id = entity_id
-        self.storage[entity_id] = entity
-        if entity_id > self.next_id:
-            self.next_id = entity_id
-        return entity
-
-    def delete(self, entity_id: int) -> None:
-        self.storage.pop(entity_id, None)
-
-    def clear(self) -> None:
-        self.storage.clear()
-        self.next_id = 0
+    @abstractmethod
+    async def delete(self, entity_id: int) -> bool:
+        pass
+    @abstractmethod
+    async def clear(self) -> bool:
+        pass
 
 
-class DriverRepository(InMemoryRepository[Driver]):
-    pass
+
+class AsyncRepository(
+    AbstractAsyncRepository[ModelType, CreateSchemaType, UpdateSchemaType, ReadSchemaType]
+):
+    def __init__(
+            self,
+            db: AsyncSession,
+            model: Type[ModelType],
+            read_schema: Type[ReadSchemaType],
+    ) -> None:
+        self.db = db
+        self.model = model
+        self.read_schema = read_schema
+
+    async def add(self, schema: CreateSchemaType) -> ReadSchemaType:
+        db_entity = self.model(**schema.model_dump())
+        self.db.add(db_entity)
+        await self.db.flush()
+        await self.db.refresh(db_entity)
+        return self.read_schema.model_validate(db_entity)
+
+    async def get(self, entity_id: int) -> ReadSchemaType | None:
+        db_entity = await self.db.get(self.model, entity_id)
+        if not db_entity:
+            return None
+        return self.read_schema.model_validate(db_entity)
+
+    async def get_all(self) -> list[ReadSchemaType]:
+        query = select(self.model)
+        result = await self.db.scalars(query)
+        return [self.read_schema.model_validate(item) for item in result.all()]
+
+    async def patch(self, entity_id: int, schema: UpdateSchemaType) -> ReadSchemaType | None:
+        update_data = schema.model_dump(exclude_unset=True)
+        if not update_data:
+            return await self.get(entity_id)
+
+        query = (
+            update(self.model)
+            .where(self.model.id == entity_id)
+            .values(**update_data)
+            .returning(self.model)
+        )
+        result = await self.db.scalar(query)
+        await self.db.flush()
+
+        if not result:
+            return None
+        return self.read_schema.model_validate(result)
+
+    async def delete(self, entity_id: int) -> bool:
+        query = delete(self.model).where(self.model.id == entity_id).returning(self.model.id)
+        result = await self.db.scalar(query)
+        await self.db.flush()
+        return result is not None
+    async def clear(self) -> bool:
+        query = delete(self.model).returning(self.model.id)
+        result = await self.db.execute(query)
+        await self.db.flush()
+        return len(result.all()) > 0
 
 
-class RaceRepository(InMemoryRepository[Race]):
-    pass
+
+    
 
 
-class DriverInRaceRepository(InMemoryRepository[DriverInRace]):
-    pass
