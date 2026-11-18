@@ -10,7 +10,7 @@ class AbstractTTLCache(ABC):
     def get(self, key: str) -> Any | None:
         pass
     @abstractmethod
-    def set(self, key: str, value: Any) -> None:
+    def set(self, key: str, value: Any, ttl=30) -> None:
         pass
     @abstractmethod
     def invalidate(self, prefix: str = "") -> None:
@@ -20,9 +20,10 @@ class TTLCache(AbstractTTLCache):
         self.logger = logger
         self._data: dict[str, tuple[float, Any]] = {}
 
-    def get(self, key: str, ttl=30) -> Any | None:
+    def get(self, key: str) -> Any | None:
         item = self._data.get(key)
         if item is None:
+            self.logger.info(f"Cache miss for key: {key}")
             return None
         expires_at, value = item
         if time.monotonic() > expires_at:
@@ -33,11 +34,12 @@ class TTLCache(AbstractTTLCache):
         self.logger.info(f"Cache hit for key: {key}")
         return value
 
-    def set(self, key: str, value: Any) -> None:
-        self._data[key] = (time.monotonic() + self.ttl, value)
+    def set(self, key: str, value: Any, ttl=30) -> None:
+        self._data[key] = (time.monotonic() + ttl, value)
         self.logger.info(f"Cache set for key: {key}")
 
     def invalidate(self, prefix: str = "") -> None:
+        self.logger.info(f"Cache invalidate for prefix: {prefix}")
         for key in [k for k in self._data if k.startswith(prefix)]:
             del self._data[key]
 

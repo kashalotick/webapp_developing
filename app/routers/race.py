@@ -19,11 +19,11 @@ async def create(body: RaceCreate, race_repo: RaceRepoDep) -> RaceRead:
 
 @race_router.get("", response_model=list[RaceRead])
 async def get_all(race_repo: RaceRepoDep, cache: CacheDep, page: Annotated[int, Query(ge=1)] = 1) -> list[RaceRead]:
-    c_data = cache.get("races")
+    c_data = cache.get(f"races_page{page}")
     if c_data:
         return c_data
     res = await race_repo.get_all(page)
-    cache.set("races", res)
+    cache.set(f"races_page{page}", res)
     return res
 
 
@@ -72,11 +72,11 @@ async def get_all_drivers(
         race_id: int,
         page: Annotated[int, Query(ge=1)] = 1
 ) -> list[DriverRead]:
-    c_data = cache.get(f"races_{race_id}_drivers")
+    c_data = cache.get(f"races_{race_id}_drivers_page{page}")
     if c_data:
         return c_data
     res = await race_repo.get_drivers_in_race(race_id, page)
-    cache.set(f"races_{race_id}_drivers", res)
+    cache.set(f"races_{race_id}_drivers_page{page}", res)
     return res
 
 

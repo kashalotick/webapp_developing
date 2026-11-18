@@ -5,6 +5,7 @@ from fastapi import FastAPI, Depends
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
+from app.cache import get_cache
 from app.db import Base, engine
 from app.models import *  # noqa
 from app.exceptions import BusinessException, error_status_code_map, ErrorSchema
@@ -54,9 +55,10 @@ async def business_exception_handler(
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 @app.middleware("http")
 async def invalidate_on_write(request: Request, call_next):
-    cache = request.app.state.cache
+    logger = get_logger()
+    cache = get_cache(logger)
     response = await call_next(request)
     if request.method not in SAFE_METHODS and response.status_code < 400:
-        await cache.invalidate_prefix("drivers")
-        await cache.invalidate_prefix("races")
+        cache.invalidate("drivers")
+        cache.invalidate("races")
     return response

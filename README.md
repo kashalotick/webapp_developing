@@ -34,19 +34,19 @@ docker exec -it webapp-lab-db psql -U admin -d postgres -f /tmp/dump.sql
 [
   {
     "name": "Max Verstappen",
-    "country": "Netherlands",
+    "country": "NL",
     "team": "Red Bull Racing",
     "number": 3
   },
   {
     "name": "Lando Norris",
-    "country": "United Kingdom",
+    "country": "GB",
     "team": "McLaren",
     "number": 1
   },
   {
     "name": "Charles Leclerc",
-    "country": "Monaco",
+    "country": "MC",
     "team": "Ferrari",
     "number": 16
   }
