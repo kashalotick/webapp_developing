@@ -4,6 +4,7 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy import select
 
+from app.api_config import ApiConfigDep
 from app.db import DbSessionDep
 from app.exceptions import BusinessException, ErrorCode
 from app.models.driver_in_race_model import DriverInRaceModel
@@ -26,13 +27,13 @@ class AbstractRaceRepository(AbstractAsyncRepository[RaceModel, RaceCreate, Race
         pass
 
     @abstractmethod
-    async def get_drivers_in_race(self, race_id: int) -> list[DriverRead]:
+    async def get_drivers_in_race(self, race_id: int, page: int) -> list[DriverRead]:
         pass
 
 
 class RaceRepository(AbstractRaceRepository, AsyncRepository):
-    def __init__(self, db: DbSessionDep, logger: LoggerDep) -> None:
-        super().__init__(db, RaceModel, RaceRead, logger)
+    def __init__(self, db: DbSessionDep, logger: LoggerDep, api_config: ApiConfigDep) -> None:
+        super().__init__(db, RaceModel, RaceRead, logger, api_config)
         self.db = db
         self.logger = logger
 
@@ -74,13 +75,16 @@ class RaceRepository(AbstractRaceRepository, AsyncRepository):
 
         self.logger.info(f"Driver {driver_id} unregistered from race {race_id}")
 
-    async def get_drivers_in_race(self, race_id: int) -> list[DriverRead]:
+    async def get_drivers_in_race(self, race_id: int, page: int) -> list[DriverRead]:
+        limit, offset = self.page(page)
         if await self.db.get(RaceModel, race_id) is None:
             raise BusinessException.not_found(RaceModel)
         stmt = (
             select(DriverModel)
             .join(DriverModel.race_registrations)
             .where(DriverInRaceModel.race_id == race_id)
+            .limit(limit)
+            .offset(offset)
         )
         result = await self.db.execute(stmt)
         drivers = result.scalars().unique().all()

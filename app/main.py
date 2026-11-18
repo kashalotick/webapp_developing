@@ -11,7 +11,7 @@ from app.exceptions import BusinessException, error_status_code_map, ErrorSchema
 from app.routers.driver import driver_router
 from app.routers.race import race_router
 
-from app.deps import get_logger
+from app.deps import get_logger, forbid_writes_if_read_only
 
 logging.basicConfig(
     level=logging.INFO,
@@ -27,12 +27,11 @@ async def lifespan(app: FastAPI):
     await engine.dispose()
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, dependencies=[Depends(forbid_writes_if_read_only)])
 
 app.include_router(driver_router)
 app.include_router(race_router)
 
-logger = get_logger()
 
 
 @app.exception_handler(BusinessException)
@@ -40,6 +39,7 @@ async def business_exception_handler(
         request: Request,
         exc: BusinessException,
 ) -> JSONResponse:
+    logger = get_logger()
     status_code = error_status_code_map[exc.error_code]
     logger.warning(
         "%s %s -> %d %s: %s",
@@ -49,3 +49,14 @@ async def business_exception_handler(
         status_code=error_status_code_map[exc.error_code],
         content=ErrorSchema(code=exc.error_code.name, message=exc.message).model_dump(),
     )
+
+
+SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
+@app.middleware("http")
+async def invalidate_on_write(request: Request, call_next):
+    cache = request.app.state.cache
+    response = await call_next(request)
+    if request.method not in SAFE_METHODS and response.status_code < 400:
+        await cache.invalidate_prefix("drivers")
+        await cache.invalidate_prefix("races")
+    return response

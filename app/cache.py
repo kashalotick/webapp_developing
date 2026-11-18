@@ -20,7 +20,7 @@ class TTLCache(AbstractTTLCache):
         self.logger = logger
         self._data: dict[str, tuple[float, Any]] = {}
 
-    def get(self, key: str, ttl=60) -> Any | None:
+    def get(self, key: str, ttl=30) -> Any | None:
         item = self._data.get(key)
         if item is None:
             return None

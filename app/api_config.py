@@ -7,9 +7,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict, JsonConfigSettin
 class ApiConfig(BaseSettings):
     model_config = SettingsConfigDict(json_file="api_config.json", json_file_encoding="utf-8")
 
-    page_size: int = 10
-    max_page_size: int = 100
-
+    readonly: bool
+    page_size: int
     @classmethod
     def settings_customise_sources(
             cls,

@@ -13,12 +13,14 @@ class ErrorCode(enum.Enum):
     DRIVER_ALREADY_REGISTERED = "Driver is already registered in race"
     DRIVER_IS_NOT_REGISTERED = "Driver is not registered in race"
     NOT_FOUND = "Not found"
+    READ_ONLY_MODE = "Read only mode"
 
 
 error_status_code_map: dict[ErrorCode, int] = {
     ErrorCode.DRIVER_ALREADY_REGISTERED: 409,
     ErrorCode.DRIVER_IS_NOT_REGISTERED: 404,
     ErrorCode.NOT_FOUND: 404,
+    ErrorCode.READ_ONLY_MODE: 405,
 }
 
 

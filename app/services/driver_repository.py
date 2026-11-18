@@ -4,6 +4,7 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy import update, select, func
 
+from app.api_config import ApiConfigDep
 from app.db import DbSessionDep
 from app.exceptions import BusinessException
 from app.models.driver_in_race_model import DriverInRaceModel
@@ -22,14 +23,14 @@ class AbstractDriverRepository(AbstractAsyncRepository[DriverModel, DriverCreate
         pass
 
     @abstractmethod
-    async def get_driver_races(self, driver_id: int) -> list[RaceRead]:
+    async def get_driver_races(self, driver_id: int, page: int) -> list[RaceRead]:
         pass
 
 
 class DriverRepository(AbstractDriverRepository, AsyncRepository):
 
-    def __init__(self, db: DbSessionDep, logger: LoggerDep) -> None:
-        super().__init__(db, DriverModel, DriverRead, logger)
+    def __init__(self, db: DbSessionDep, logger: LoggerDep, api_config: ApiConfigDep) -> None:
+        super().__init__(db, DriverModel, DriverRead, logger, api_config)
         self.db = db
         self.logger = logger
 
@@ -53,7 +54,8 @@ class DriverRepository(AbstractDriverRepository, AsyncRepository):
 
         return DriverRead.model_validate(result)
 
-    async def get_driver_races(self, driver_id: int) -> list[RaceRead]:
+    async def get_driver_races(self, driver_id: int, page: int) -> list[RaceRead]:
+        limit, offset = self.page(page)
         if await self.db.get(DriverModel, driver_id) is None:
             raise BusinessException.not_found(DriverModel)
 
@@ -61,10 +63,13 @@ class DriverRepository(AbstractDriverRepository, AsyncRepository):
             select(RaceModel)
             .join(RaceModel.driver_registrations)
             .where(DriverInRaceModel.driver_id == driver_id)
+            .limit(limit)
+            .offset(offset)
         )
         result = await self.db.execute(stmt)
         races = result.scalars().unique().all()
 
         return [RaceRead.model_validate(race) for race in races]
+
 
 DriverRepoDep = Annotated[AbstractDriverRepository, Depends(DriverRepository)]
