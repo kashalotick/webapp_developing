@@ -1,10 +1,10 @@
 ﻿from fastapi import APIRouter
 from starlette import status
 
-from app.deps import DriverRepoDep
 from app.exceptions import BusinessException, ErrorSchema
 from app.schemas.driver import DriverCreate, DriverRead, DriverUpdate, RatingDelta
 from app.schemas.race import RaceRead
+from app.services.driver_repository import DriverRepoDep
 
 driver_router = APIRouter(prefix="/drivers", tags=["Drivers"])
 

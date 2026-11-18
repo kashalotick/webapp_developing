@@ -1,4 +1,5 @@
-﻿from abc import ABC, abstractmethod
+﻿import logging
+from abc import ABC, abstractmethod
 from typing import Generic, TypeVar, Type
 
 from pydantic import BaseModel
@@ -42,16 +43,19 @@ class AsyncRepository(
             db: AsyncSession,
             model: Type[ModelType],
             read_schema: Type[ReadSchemaType],
+            logger: logging.Logger,
     ) -> None:
         self.db = db
         self.model = model
         self.read_schema = read_schema
+        self.logger = logger
 
     async def add(self, schema: CreateSchemaType) -> ReadSchemaType:
         db_entity = self.model(**schema.model_dump())
         self.db.add(db_entity)
         await self.db.flush()
         await self.db.refresh(db_entity)
+        self.logger.info(f"Added entity with id {db_entity.id}")
         return self.read_schema.model_validate(db_entity)
 
     async def get(self, entity_id: int) -> ReadSchemaType | None:
@@ -80,18 +84,22 @@ class AsyncRepository(
         await self.db.flush()
 
         if not result:
+            self.logger.warning(f"Entity with id {entity_id} not found")
             return None
+        self.logger.info(f"Updated entity with id {entity_id}")
         return self.read_schema.model_validate(result)
 
     async def delete(self, entity_id: int) -> bool:
         query = delete(self.model).where(self.model.id == entity_id).returning(self.model.id)
         result = await self.db.scalar(query)
         await self.db.flush()
+        self.logger.info(f"Deleted entity with id {entity_id}")
         return result is not None
     async def clear(self) -> bool:
         query = delete(self.model).returning(self.model.id)
         result = await self.db.execute(query)
         await self.db.flush()
+        self.logger.info("Cleared all entities")
         return len(result.all()) > 0
 
 

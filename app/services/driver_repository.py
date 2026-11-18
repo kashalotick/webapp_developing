@@ -1,8 +1,11 @@
 ﻿from abc import ABC, abstractmethod
+from typing import Annotated
 
+from fastapi import Depends
 from sqlalchemy import update, select, func
-from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.db import DbSessionDep
+from app.exceptions import BusinessException
 from app.models.driver_in_race_model import DriverInRaceModel
 from app.models.driver_model import DriverModel
 from app.models.race_model import RaceModel
@@ -10,8 +13,9 @@ from app.schemas.driver import DriverRead, DriverCreate, DriverUpdate
 from app.schemas.race import RaceRead
 from app.services.repository import AbstractAsyncRepository, AsyncRepository
 
+from app.deps import LoggerDep
 
-class AbstractDriverRepository(AbstractAsyncRepository[DriverModel, DriverCreate, DriverUpdate ,DriverRead], ABC):
+class AbstractDriverRepository(AbstractAsyncRepository[DriverModel, DriverCreate, DriverUpdate, DriverRead], ABC):
 
     @abstractmethod
     async def change_rating(self, driver_id: int, delta: int) -> DriverRead | None:
@@ -24,9 +28,11 @@ class AbstractDriverRepository(AbstractAsyncRepository[DriverModel, DriverCreate
 
 class DriverRepository(AbstractDriverRepository, AsyncRepository):
 
-    def __init__(self, db: AsyncSession) -> None:
-        super().__init__(db, DriverModel, DriverRead)
+    def __init__(self, db: DbSessionDep, logger: LoggerDep) -> None:
+        super().__init__(db, DriverModel, DriverRead, logger)
         self.db = db
+        self.logger = logger
+
 
     async def change_rating(self, driver_id: int, delta: int) -> None | DriverRead:
         query = (
@@ -41,11 +47,16 @@ class DriverRepository(AbstractDriverRepository, AsyncRepository):
         await self.db.flush()
 
         if not result:
+            self.logger.warning(f"Driver {driver_id} not found")
             return None
+        self.logger.info(f"Driver {driver_id} rating changed by {delta}")
+
         return DriverRead.model_validate(result)
 
-
     async def get_driver_races(self, driver_id: int) -> list[RaceRead]:
+        if await self.db.get(DriverModel, driver_id) is None:
+            raise BusinessException.not_found(DriverModel)
+
         stmt = (
             select(RaceModel)
             .join(RaceModel.driver_registrations)
@@ -56,7 +67,4 @@ class DriverRepository(AbstractDriverRepository, AsyncRepository):
 
         return [RaceRead.model_validate(race) for race in races]
 
-
-
-
-
+DriverRepoDep = Annotated[AbstractDriverRepository, Depends(DriverRepository)]

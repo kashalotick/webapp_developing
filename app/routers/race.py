@@ -1,10 +1,10 @@
 ﻿from fastapi import APIRouter
 from starlette import status
 
-from app.deps import RaceRepoDep
 from app.exceptions import BusinessException, ErrorSchema
 from app.schemas.driver import DriverRead, DriverInRace
 from app.schemas.race import RaceRead, RaceCreate, RaceUpdate, DriverRegistration
+from app.services.race_repository import RaceRepoDep
 
 race_router = APIRouter(prefix="/races", tags=["Races"])
 
