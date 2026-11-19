@@ -9,6 +9,8 @@ from app.cache import get_cache
 from app.db import Base, engine
 from app.models import *  # noqa
 from app.exceptions import BusinessException, error_status_code_map, ErrorSchema
+from app.routers.auth import auth_router
+from app.routers.client import client_router
 from app.routers.driver import driver_router
 from app.routers.race import race_router
 
@@ -32,7 +34,8 @@ app = FastAPI(lifespan=lifespan, dependencies=[Depends(forbid_writes_if_read_onl
 
 app.include_router(driver_router)
 app.include_router(race_router)
-
+app.include_router(auth_router)
+app.include_router(client_router)
 
 
 @app.exception_handler(BusinessException)

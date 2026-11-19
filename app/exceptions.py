@@ -14,6 +14,9 @@ class ErrorCode(enum.Enum):
     DRIVER_IS_NOT_REGISTERED = "Driver is not registered in race"
     NOT_FOUND = "Not found"
     READ_ONLY_MODE = "Read only mode"
+    INVALID_CREDENTIALS = "Invalid credentials"
+    NOT_AUTHENTICATED = "Not authenticated"
+    INVALID_TOKEN = "Invalid token"
 
 
 error_status_code_map: dict[ErrorCode, int] = {
@@ -21,6 +24,10 @@ error_status_code_map: dict[ErrorCode, int] = {
     ErrorCode.DRIVER_IS_NOT_REGISTERED: 404,
     ErrorCode.NOT_FOUND: 404,
     ErrorCode.READ_ONLY_MODE: 405,
+    ErrorCode.INVALID_CREDENTIALS: 401,
+    ErrorCode.NOT_AUTHENTICATED: 401,
+    ErrorCode.INVALID_TOKEN: 401,
+
 }
 
 
