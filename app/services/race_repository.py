@@ -35,7 +35,7 @@ class RaceRepository(AbstractRaceRepository, AsyncRepository):
     def __init__(self, db: DbSessionDep, logger: LoggerDep, api_config: ApiConfigDep) -> None:
         super().__init__(db, RaceModel, RaceRead, logger, api_config)
         self.db = db
-        self.logger = logger
+        self.logger = logger.getChild(type(self).__name__)
 
     async def _get_registration_or_none(self, race_id: int, driver_id: int) -> DriverInRaceModel | None:
         race = await self.db.get(RaceModel, race_id)

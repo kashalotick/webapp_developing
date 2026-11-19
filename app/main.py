@@ -40,7 +40,7 @@ async def business_exception_handler(
         request: Request,
         exc: BusinessException,
 ) -> JSONResponse:
-    logger = get_logger()
+    logger = get_logger().getChild(__name__)
     status_code = error_status_code_map[exc.error_code]
     logger.warning(
         "%s %s -> %d %s: %s",

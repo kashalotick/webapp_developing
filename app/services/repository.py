@@ -51,7 +51,7 @@ class AsyncRepository(
         self.db = db
         self.model = model
         self.read_schema = read_schema
-        self.logger = logger
+        self.logger = logger.getChild(type(self).__name__)
         self.api_config = api_config
 
 

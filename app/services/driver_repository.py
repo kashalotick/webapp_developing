@@ -32,7 +32,7 @@ class DriverRepository(AbstractDriverRepository, AsyncRepository):
     def __init__(self, db: DbSessionDep, logger: LoggerDep, api_config: ApiConfigDep) -> None:
         super().__init__(db, DriverModel, DriverRead, logger, api_config)
         self.db = db
-        self.logger = logger
+        self.logger = logger.getChild(type(self).__name__)
 
 
     async def change_rating(self, driver_id: int, delta: int) -> None | DriverRead:

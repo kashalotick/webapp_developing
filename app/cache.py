@@ -17,7 +17,7 @@ class AbstractTTLCache(ABC):
         pass
 class TTLCache(AbstractTTLCache):
     def __init__(self, logger: LoggerDep):
-        self.logger = logger
+        self.logger = logger.getChild(type(self).__name__)
         self._data: dict[str, tuple[float, Any]] = {}
 
     def get(self, key: str) -> Any | None:
